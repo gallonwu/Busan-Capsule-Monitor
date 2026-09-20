@@ -70,33 +70,45 @@ def check_tickets(page):
     return available
 
 
-def send_line_message(items):
+def send_line_text(text):
     token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
     user_id = os.environ.get("LINE_USER_ID")
     if not token or not user_id:
         raise RuntimeError("缺少 LINE_CHANNEL_ACCESS_TOKEN 或 LINE_USER_ID")
 
-    lines = ["【釜山膠囊列車有票了】"]
-    lines.extend(
-        f"{item['date']}｜{item['time']}｜剩餘 {item['remaining']} 張"
-        for item in items
-    )
-    lines.extend(["", "立即查看：", BOOKING_URL])
     response = requests.post(
         "https://api.line.me/v2/bot/message/push",
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json",
         },
-        json={"to": user_id, "messages": [{"type": "text", "text": "\n".join(lines)}]},
+        json={"to": user_id, "messages": [{"type": "text", "text": text}]},
         timeout=30,
     )
     response.raise_for_status()
 
 
+def send_line_message(items):
+    lines = ["【釜山膠囊列車有票了】"]
+    lines.extend(
+        f"{item['date']}｜{item['time']}｜剩餘 {item['remaining']} 張"
+        for item in items
+    )
+    lines.extend(["", "立即查看：", BOOKING_URL])
+    send_line_text("\n".join(lines))
+
+
 def main():
     previous_signature = ""
-    print(f"監控啟動：每 {CHECK_INTERVAL_SECONDS} 秒檢查一次", flush=True)
+    startup_text = (
+        "【釜山膠囊列車監控已啟動】\n"
+        "日期：2026/10/12～2026/10/16\n"
+        "時段：全天\n"
+        "張數：至少 1 張\n"
+        f"頻率：每 {CHECK_INTERVAL_SECONDS} 秒檢查一次"
+    )
+    send_line_text(startup_text)
+    print(startup_text.replace("\n", "｜"), flush=True)
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(
