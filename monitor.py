@@ -73,8 +73,10 @@ def check_tickets(page):
 def send_line_text(text):
     token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
     user_id = os.environ.get("LINE_USER_ID")
-    if not token or not user_id:
-        raise RuntimeError("缺少 LINE_CHANNEL_ACCESS_TOKEN 或 LINE_USER_ID")
+        if not token:
+        raise RuntimeError("缺少 LINE_CHANNEL_ACCESS_TOKEN")
+    if not user_id:
+        raise RuntimeError("缺少 LINE_USER_ID")
 
     response = requests.post(
         "https://api.line.me/v2/bot/message/push",
